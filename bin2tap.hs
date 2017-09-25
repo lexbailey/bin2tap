@@ -26,13 +26,14 @@ checkSum :: [Word8] -> Word8
 checkSum blockData = foldl xor 0 blockData
 
 block :: Word8 -> [Word8] -> BS.ByteString
-block flag blockData = BS.pack ([flag] ++ blockData ++ [checkSum blockData])
+block flag blockData = let payload = [flag] ++ blockData ++ [checkSum ([flag] ++ blockData)] in
+    BS.pack (splitWord16_8 (fromIntegral (length (payload)) :: Word16) ++ payload)
 
 headerBlock blockData = block 0 blockData
 dataBlock blockData = block 255 blockData
 
 codeHeader :: String -> Word16 -> Word16 -> [Word8]
-codeHeader name length startaddr = headerData 3 name length startaddr 0
+codeHeader name length startaddr = headerData 3 name length startaddr 32768
 
 codeHeaderBlock :: String -> Word16 -> Word16 -> BS.ByteString
 codeHeaderBlock name length startaddr = headerBlock (codeHeader name length startaddr)
@@ -69,7 +70,12 @@ tapeConversion _addr _name filename = do
     addr <- maybe invalidAddr return _addr;
     name <- maybe invalidName return _name;
     filelen <- getFileSize filename;
-    BS.writeFile outfilename (codeHeaderBlock name (fromIntegral filelen :: Word16) (fromIntegral addr :: Word16))
+    filedata <- BS.readFile filename;
+    BS.writeFile outfilename (
+        codeHeaderBlock name (fromIntegral filelen :: Word16) (fromIntegral addr :: Word16)
+        `BS.append`
+        dataBlock (BS.unpack filedata)
+        )
     where outfilename = filename ++ ".tap"
 
 main = getArgs >>= maybe invalidArgs (\(addr, name, file) -> tapeConversion addr name file) . parseArgs
