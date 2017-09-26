@@ -19,7 +19,7 @@ splitWord16_8 a = [fromIntegral a, fromIntegral (shiftR a 8)]
 
 -- String to Word8 array
 stringData :: String -> [Word8]
-stringData s = map (\c -> fromIntegral (ord c)) s
+stringData = map (fromIntegral . ord)
 
 -- For building the spectrum format header block data
 headerData :: Word8 -> String -> Word16 -> Word16 -> Word16 -> [Word8]
@@ -28,7 +28,7 @@ headerData datatype name length ext1 ext2 =
 
 -- Calculates the block's checksum byte
 checkSum :: [Word8] -> Word8
-checkSum blockData = foldl xor 0 blockData
+checkSum = foldl xor 0
 
 -- Takes a block of data, adds the flag (for header or data) and prepends
 -- the .tap format length field
@@ -38,8 +38,8 @@ block flag blockData = let payload = [flag] ++ blockData ++ [checkSum ([flag] ++
 
 -- helpers for the different types of blocks
 headerBlock, dataBlock :: [Word8] -> BS.ByteString
-headerBlock blockData = block 0 blockData
-dataBlock blockData = block 255 blockData
+headerBlock = block 0
+dataBlock   = block 255
 
 -- a helper for code headers (type 3 with special magic number in ext2 field)
 codeHeader :: String -> Word16 -> Word16 -> [Word8]
