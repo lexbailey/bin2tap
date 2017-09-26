@@ -1,11 +1,10 @@
-import System.Environment
-import Text.Read
-import Data.Int
-import Data.Word
 import Data.Bits
-import Data.Char
 import qualified Data.ByteString as BS
+import Data.Char
+import Data.Word
+import System.Environment
 import System.Posix
+import Text.Read
 
 getFileSize :: String -> IO FileOffset
 getFileSize path = do
