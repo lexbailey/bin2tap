@@ -1,6 +1,5 @@
 import System.Environment
 import Text.Read
-import Data.Int
 import Data.Word
 import Data.Bits
 import Data.Char
