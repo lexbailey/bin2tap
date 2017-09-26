@@ -1,3 +1,5 @@
+module Main (main) where
+
 import Data.Bits
 import qualified Data.ByteString as BS
 import Data.Char
