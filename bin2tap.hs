@@ -13,7 +13,7 @@ getFileSize path = do
     return (fileSize stat)
 
 -- Split an unsigned 16 bit int into a pair of unsigned 8 bit ints
-splitWord16_8 a = [(fromIntegral a :: Word8), (fromIntegral (shiftR a 8) :: Word8)]
+splitWord16_8 a = [fromIntegral a :: Word8, fromIntegral (shiftR a 8) :: Word8]
 
 -- String to Word8 array
 stringData :: String -> [Word8]
@@ -22,7 +22,7 @@ stringData s = map (\c -> fromIntegral (ord c) :: Word8) s
 -- For building the spectrum format header block data
 headerData :: Word8 -> String -> Word16 -> Word16 -> Word16 -> [Word8]
 headerData datatype name length ext1 ext2 =
-    [datatype] ++ (stringData name) ++ (splitWord16_8 length) ++ (splitWord16_8 ext1) ++ (splitWord16_8 ext2)
+    [datatype] ++ stringData name ++ splitWord16_8 length ++ splitWord16_8 ext1 ++ splitWord16_8 ext2
 
 -- Calculates the block's checksum byte
 checkSum :: [Word8] -> Word8
@@ -32,7 +32,7 @@ checkSum blockData = foldl xor 0 blockData
 -- the .tap format length field
 block :: Word8 -> [Word8] -> BS.ByteString
 block flag blockData = let payload = [flag] ++ blockData ++ [checkSum ([flag] ++ blockData)] in
-    BS.pack (splitWord16_8 (fromIntegral (length (payload)) :: Word16) ++ payload)
+    BS.pack (splitWord16_8 (fromIntegral (length payload) :: Word16) ++ payload)
 
 -- helpers for the different types of blocks
 headerBlock blockData = block 0 blockData
@@ -47,7 +47,7 @@ codeHeaderBlock :: String -> Word16 -> Word16 -> BS.ByteString
 codeHeaderBlock name length startaddr = headerBlock (codeHeader name length startaddr)
 
 -- limit checks for start address
-rangedAddr :: Int -> (Maybe Int)
+rangedAddr :: Int -> Maybe Int
 rangedAddr addr =
     if addr >= 0 && addr <= 65535 then Just addr
     else Nothing
@@ -78,7 +78,7 @@ invalidName = error "Tape file name must be no more than 10 characters"
 invalidAddr = error "Address must be an integer in the range 0 to 65535 (0x0000 to 0xFFFF)"
 
 -- Main conversion function
-tapeConversion :: (Maybe Int) -> (Maybe String) -> String -> IO ()
+tapeConversion :: Maybe Int -> Maybe String -> String -> IO ()
 tapeConversion _addr _name filename = do
     -- Various IO happens here...
     -- validate arguments
