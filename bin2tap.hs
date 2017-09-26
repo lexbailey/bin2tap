@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Monad
 import Data.Bits
 import qualified Data.ByteString as BS
 import Data.Char
@@ -51,25 +52,27 @@ codeHeaderBlock name length startaddr = headerBlock (codeHeader name length star
 
 -- limit checks for start address
 rangedAddr :: Int -> Maybe Int
-rangedAddr addr =
-    if addr >= 0 && addr <= 65535 then Just addr
-    else Nothing
+rangedAddr addr = do
+    guard $ addr >= 0 && addr <= 65335
+    Just addr
 
 -- for parsing address arg
 parseAddr :: String -> Maybe Int
-parseAddr addr = maybe Nothing rangedAddr (readMaybe addr)
+parseAddr = readMaybe >=> rangedAddr
 
 -- for parsing name arg (must be <= 10 length)
 parseName :: String -> Maybe String
-parseName name = let l = length name in
-    if l > 10 then Nothing
-    else Just (name ++ replicate (10-l) ' ')
+parseName name = do
+    let l = length name
+    guard $ l <= 10
+    Just (name ++ replicate (10-l) ' ')
 
 -- for parsing all the command line arguments
 parseArgs :: [String] -> Maybe (Maybe Int, Maybe String, String)
-parseArgs args = let l = length args in
-    if l /= 3 then Nothing
-    else Just (parseAddr (args !! 0), parseName (args !! 1), args !! 2)
+parseArgs args = do
+    let l = length args
+    guard $ l == 3
+    Just (parseAddr (args !! 0), parseName (args !! 1), args !! 2)
 
 invalidArgs :: a
 invalidArgs = error ("Usage: bin2tap addr name file" ++
