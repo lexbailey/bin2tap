@@ -116,4 +116,8 @@ tapeConversion _addr _name filename = do
     where outfilename = filename ++ ".tap"
 
 main :: IO ()
-main = getArgs >>= maybe (throw InvalidArgs) (\(addr, name, file) -> tapeConversion addr name file) . parseArgs
+main = do
+  args <- getArgs
+  case parseArgs args of
+    Nothing -> throw InvalidArgs
+    Just (addr, name, file) -> tapeConversion addr name file
