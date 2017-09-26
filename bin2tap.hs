@@ -1,9 +1,12 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module Main (main) where
 
+import Control.Exception
 import Control.Monad
 import Data.Bits
 import qualified Data.ByteString as BS
 import Data.Char
+import Data.Typeable
 import Data.Word
 import System.Environment
 import System.Posix
@@ -74,25 +77,30 @@ parseArgs args = do
     guard $ l == 3
     Just (parseAddr (args !! 0), parseName (args !! 1), args !! 2)
 
-invalidArgs :: a
-invalidArgs = error ("Usage: bin2tap addr name file" ++
-    "    where addr is the start address," ++
-    "    name is the tape file name" ++
-    "    and file is the local filename")
+data Bin2TapException
+    = InvalidArgs
+    | InvalidName
+    | InvalidAddr
+    deriving (Eq, Typeable)
 
-invalidName :: a
-invalidName = error "Tape file name must be no more than 10 characters"
+instance Show Bin2TapException where
+    show InvalidArgs =
+        "Usage: bin2tap addr name file\n\
+        \    where addr is the start address,\n\
+        \    name is the tape file name\n\
+        \    and file is the local filename"
+    show InvalidName = "Tape file name must be no more than 10 characters"
+    show InvalidAddr = "Address must be an integer in the range 0 to 655335 (0x0000 to 0xFFFF)"
 
-invalidAddr :: a
-invalidAddr = error "Address must be an integer in the range 0 to 65535 (0x0000 to 0xFFFF)"
+instance Exception Bin2TapException
 
 -- Main conversion function
 tapeConversion :: Maybe Int -> Maybe String -> String -> IO ()
 tapeConversion _addr _name filename = do
     -- Various IO happens here...
     -- validate arguments
-    addr <- maybe invalidAddr return _addr;
-    name <- maybe invalidName return _name;
+    addr <- maybe (throw InvalidAddr) return _addr;
+    name <- maybe (throw InvalidName) return _name;
     -- get the size of the binary
     filelen <- getFileSize filename;
     -- get the contents of the binary
@@ -108,4 +116,4 @@ tapeConversion _addr _name filename = do
     where outfilename = filename ++ ".tap"
 
 main :: IO ()
-main = getArgs >>= maybe invalidArgs (\(addr, name, file) -> tapeConversion addr name file) . parseArgs
+main = getArgs >>= maybe (throw InvalidArgs) (\(addr, name, file) -> tapeConversion addr name file) . parseArgs
