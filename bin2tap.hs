@@ -1,3 +1,5 @@
+module Main (main) where
+
 import System.Environment
 import Text.Read
 import Data.Word
