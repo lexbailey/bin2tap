@@ -87,7 +87,7 @@ instance Show Bin2TapException where
         \    name is the tape file name\n\
         \    and file is the local filename"
     show InvalidName = "Tape file name must be no more than 10 characters"
-    show InvalidAddr = "Address must be an integer in the range 0 to 655335 (0x0000 to 0xFFFF)"
+    show InvalidAddr = "Address must be an integer in the range 0 to 65535 (0x0000 to 0xFFFF)"
 
 instance Exception Bin2TapException
 
